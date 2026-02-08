@@ -48,6 +48,22 @@ echo $REPO_URL $REPO_BRANCH
 echo "$REPO_URL/$REPO_BRANCH" >"$BASE_PATH/repo_flag"
 git clone --depth 1 -b $REPO_BRANCH $REPO_URL $BUILD_DIR
 
+# ======================== 新增代码开始（仅保留OpenClash） ========================
+# 1. 给update.sh添加执行权限（基于BASE_PATH定位update.sh，确保路径正确）
+chmod +x "$BASE_PATH/update.sh" || {
+    echo "警告：无法给update.sh添加执行权限，但继续执行" >&2
+}
+
+# 2. 执行update.sh，复用脚本内的变量（适配不同设备的repo配置）
+# 参数：REPO_URL REPO_BRANCH BUILD_DIR Commit哈希（none表示不指定）
+echo "开始执行update.sh，清理多余插件，仅保留OpenClash..."
+bash "$BASE_PATH/update.sh" "$REPO_URL" "$REPO_BRANCH" "$BUILD_DIR" "none" || {
+    echo "错误：update.sh执行失败！" >&2
+    exit 1
+}
+echo "✅ update.sh执行完成，已清理多余插件"
+# ======================== 新增代码结束 ========================
+
 # GitHub Action 移除国内下载源
 PROJECT_MIRRORS_FILE="$BUILD_DIR/scripts/projectsmirrors.json"
 
