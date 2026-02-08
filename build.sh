@@ -92,7 +92,9 @@ apply_config
 remove_uhttpd_dependency
 
 cd "$BASE_PATH/$BUILD_DIR"
-make defconfig
+# ========== 第1处修改：新增 syncconfig 生成缺失的配置文件 ==========
+make defconfig && make syncconfig -j1 V=s
+# ========== 修改结束 ==========
 
 if grep -qE "^CONFIG_TARGET_x86_64=y" "$CONFIG_FILE"; then
     DISTFEEDS_PATH="$BASE_PATH/$BUILD_DIR/package/emortal/default-settings/files/99-distfeeds.conf"
@@ -110,8 +112,14 @@ if [[ -d $TARGET_DIR ]]; then
     find "$TARGET_DIR" -type f \( -name "*.bin" -o -name "*.manifest" -o -name "*efi.img.gz" -o -name "*.itb" -o -name "*.fip" -o -name "*.ubi" -o -name "*rootfs.tar.gz" \) -exec rm -f {} +
 fi
 
-make download -j$(($(nproc) * 2))
-make -j$(($(nproc) + 1)) || make -j1 V=s
+# ========== 第2处修改：降低下载/编译线程数，避免资源耗尽 ==========
+# 下载线程数从 nproc*2 改为 nproc（Action环境下载线程过多易失败）
+make download -j$(nproc)
+# 编译线程数从 nproc+1 改为 nproc-1（至少1个线程，避免内核编译崩溃）
+MAKE_JOBS=$(( $(nproc) - 1 ))
+[ $MAKE_JOBS -lt 1 ] && MAKE_JOBS=1
+make -j$MAKE_JOBS || make -j1 V=s
+# ========== 修改结束 ==========
 
 FIRMWARE_DIR="$BASE_PATH/firmware"
 \rm -rf "$FIRMWARE_DIR"
