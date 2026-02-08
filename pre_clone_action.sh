@@ -66,7 +66,15 @@ echo "✅ update.sh执行完成，已清理多余插件"
 
 # GitHub Action 移除国内下载源
 PROJECT_MIRRORS_FILE="$BUILD_DIR/scripts/projectsmirrors.json"
-
 if [ -f "$PROJECT_MIRRORS_FILE" ]; then
     sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
 fi
+
+# 保留之前调用 update.sh 的代码（这部分不动）
+echo "开始执行update.sh，清理多余插件，仅保留OpenClash..."
+bash "$BASE_PATH/update.sh" "$REPO_URL" "$REPO_BRANCH" "$BUILD_DIR" "none" || {
+    echo "错误：update.sh执行失败！" >&2
+    exit 1
+}
+echo "✅ update.sh执行完成，已清理多余插件"
+
