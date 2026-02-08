@@ -41,15 +41,21 @@ jobs:
       - name: Free disk space
         uses: sbwml/actions@free-disk
 
-      - name: Build System Setup
-        run: |
-          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
-          sudo -E apt -yqq install dos2unix
-          sudo -E apt -yqq install libfuse-dev
-          sudo -E apt -yqq autoremove --purge
-          sudo -E apt -yqq autoclean
-          sudo -E apt -yqq clean
-          sudo -E systemctl daemon-reload
+       - name: Build System Setup
+       run: |
+        # 安装基础编译环境
+        sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+        # 强制补充 Ubuntu 24.04 内核编译必需依赖（之前缺失的关键）
+        sudo -E apt -yqq install libssl-dev libelf-dev dwarves bison flex gcc-multilib g++-multilib
+        # 原有依赖保留
+        sudo -E apt -yqq install dos2unix
+        sudo -E apt -yqq install libfuse-dev
+        # 清理缓存，释放空间
+        sudo -E apt -yqq autoremove --purge
+        sudo -E apt -yqq autoclean
+        sudo -E apt -yqq clean
+        sudo -E systemctl daemon-reload
+
 
       - name: Checkout
         uses: actions/checkout@v6.0.2
